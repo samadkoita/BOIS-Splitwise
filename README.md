@@ -1,2 +1,2 @@
 # BOIS-Splitwise
-SSL Project
+A group expenditure management application

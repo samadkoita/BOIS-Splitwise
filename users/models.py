@@ -12,3 +12,13 @@ class CustomUser(AbstractUser):
 def contact_default():
     return {"firstname": "Webmaster",
             "lastname":"Sumanyu"}
+
+class Relationship(models.Model):
+	active_id = ForeignKey(CustomUser)
+	receiver_id = ForeignKey(CustomUser)
+	relationship_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+	net_balance = models.IntegerField(default=0)
+
+class Transaction:
+	relationship = models.ForeignKey()
+	transaction_id = models.UUIDField(default=uuid.uuid4, editable=False)

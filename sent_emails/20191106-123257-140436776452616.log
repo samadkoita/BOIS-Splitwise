@@ -1,0 +1,24 @@
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Password reset on 127.0.0.1:8000
+From: webmaster@localhost
+To: sumanyu.ghoshal@iitb.ac.in
+Date: Wed, 06 Nov 2019 12:32:57 -0000
+Message-ID: <157304357717.31767.4440519078355321451@sumanyug>
+
+
+Hi!You're receiving this email because you requested a password reset for your user account at 127.0.0.1:8000.
+
+Please go to the following page and choose a new password:
+
+http://127.0.0.1:8000/users/reset/MQ/5b7-e8d4e216ee11db75bc60/
+
+Your username, in case you’ve forgotten: Webmaster
+
+Thanks for using our site!
+
+The SplitWise team
+
+
+-------------------------------------------------------------------------------

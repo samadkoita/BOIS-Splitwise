@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users.apps.UsersConfig',
 ]
-#AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = 'users.CustomUser'
+
 
 
 MIDDLEWARE = [
@@ -67,7 +68,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
             ],
         },
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],#This is so that we can globally access the templates everywhere
     },
 ]
 
@@ -87,6 +88,7 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
+AUTHENTICATION_BACKENDS = ['authentication.EmailBackend']
 
 AUTH_PASSWORD_VALIDATORS = [
     {

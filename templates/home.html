@@ -1,7 +1,7 @@
 <!-- templates/home.html -->
 {% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}SplitWIse{% endblock %}
 
 {% block content %}
 {% if user.is_authenticated %}
@@ -11,6 +11,7 @@
 
 {% else %}
   <p>SplitWise!</p>
-  <a href="{% url 'login' %}">login</a>
+  <a href="{% url 'login' %}">login</a><br>
+  <a href="{% url 'signup' %}">Signup</a>
 {% endif %}
 {% endblock %}

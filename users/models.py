@@ -5,11 +5,12 @@ from django.db import models
 
 class CustomUser(AbstractUser):
 # add additional fields in here
-	first_name =  models.CharField(max_length=30)
-	last_name = models.CharField(max_length=30)
+	firstname =  models.CharField(max_length=30,blank = True)
+	lastname = models.CharField(max_length=30,blank = True)
+	avatar = models.ImageField(default = "default.jpeg",blank = True)
 	def __str__(self):
-		return self.email
-
+		return self.user.username
+	
 def contact_default():
     return {"firstname": "Webmaster",
             "lastname":"Sumanyu"}

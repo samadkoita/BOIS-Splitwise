@@ -6,12 +6,20 @@
 {% block content %}
 {% if user.is_authenticated %}
   Hi {{ user.username }}!<br>
-  Logout:<a href="{% url 'logout' %}">logout</a>
-  <p><a href="{% url 'password_reset' %}">reset password</a></p>
+  <a href="{% url 'friend' user.id %}">Friends Tab</a>
+  <p><a href="{% url 'friend' %}">Groups Tab</a></p>
+  {% if user.avatar %}
+  <p>Profile pic:</p>
+  <p><img src = "{{ user.avatar.url }}" alt = ""></p>
+  {% endif %}
+  <p>Logout:<a href="{% url 'logout' %}">logout</a></p>
+  <p><a href="{% url 'change_password' %}">change password</a></p>
+  <p><a href="{% url 'update'%}">update details</a></p>
 
 {% else %}
   <p>SplitWise!</p>
   <a href="{% url 'login' %}">login</a><br>
   <a href="{% url 'signup' %}">Signup</a>
+
 {% endif %}
 {% endblock %}

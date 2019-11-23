@@ -1,0 +1,16 @@
+<!-- templates/signup.html -->
+{% extends 'base.html' %}
+<style>
+ul{list-style-type: none;}
+</style>
+{% block content %}
+  <h2>Update Details</h2>
+  <form method="post" enctype ="multipart/form-data">{% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+  </form>
+{% endblock %}
+
+
+
+<!--enctype ="multipart/form-data"-->

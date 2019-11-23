@@ -1,0 +1,8 @@
+<!-- templates/friends_list.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>Friend List</h1>
+{% for user in users %}
+    <p>{{ user.receiver_id }}</p>
+{% endfor %}
+{% endblock %}

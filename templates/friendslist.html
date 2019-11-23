@@ -1,8 +1,14 @@
 <!-- templates/friends_list.html -->
 {% extends 'base.html' %}
 {% block content %}
+<p>Add a friend</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit"> Add</button>
+</form>
 <h1>Friend List</h1>
 {% for user in users %}
-    <p>{{ user.receiver_id.firstname }}</p>
+    <p>{{ user.receiver_id }} {{ user.net_balance }}</p>
 {% endfor %}
 {% endblock %}

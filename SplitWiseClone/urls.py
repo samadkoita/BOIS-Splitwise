@@ -16,10 +16,35 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include,path
 from django.views.generic.base import TemplateView
+from django.conf import settings
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
     path('users/', include('users.urls')),
-    path('users/', include('django.contrib.auth.urls')),
-]
+
+
+
+
+
+
+
+    #From the link below, we get the following:
+    
+    #users/login/ [name='login']
+    #users/logout/ [name='logout']
+    #The next few are for forgot password.
+    #users/password_change/ [name='password_change']
+    # users/password_change/done/ [name='password_change_done']
+    # users/password_reset/ [name='password_reset']
+    # users/password_reset/done/ [name='password_reset_done']
+    # users/reset/<uidb64>/<token>/ [name='password_reset_confirm']
+    # users/reset/done/ [name='password_reset_complete']
+    #Changing password has been implemented in users/views.py
+    path('users/', include('django.contrib.auth.urls')), 
+    
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns +=staticfiles_urlpatterns()
+urlpatterns+= static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

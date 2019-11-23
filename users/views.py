@@ -10,10 +10,12 @@ from django.http import HttpResponse
 from django.contrib.sessions import *
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
+from django.db.utils import IntegrityError
 
 from .models import CustomUser, Relationship
 
-from .forms import CustomUserCreationForm,CustomUserChangeForm
+
+from .forms import CustomUserCreationForm,CustomUserChangeForm,FriendForm
 #Sign up
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
@@ -75,3 +77,32 @@ def FriendView(request, id):
     print(id)
     args = {"users" : users}
     return render(request=request, template_name=template_name, context=args)
+  
+class FriendTabView(TemplateView):
+    template_name = "friendslist.html"
+
+    def get(self, request, id):
+        form = FriendForm()
+        users = Relationship.objects.filter(active_id__id=id)
+        args = {"users" : users, 'form':form}
+        return render(request=request, template_name=self.template_name, context=args)
+
+    def post(self, request, id):
+        form = FriendForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            friends = CustomUser.objects.filter(email=email)
+            if len(friends) == 1:
+                if friends[0].id != int(id) :
+                    try:
+                        user = CustomUser.objects.get(id=id)
+                        r = Relationship(active_id=user, receiver_id=friends[0])
+                        r.save()
+                        r = Relationship(active_id=friends[0], receiver_id=user)
+                        r.save()
+                    except (IntegrityError,CustomUser.DoesNotExist) as e:
+                        print(e)
+        form = FriendForm()
+        users = Relationship.objects.filter(active_id__id=id)
+        args = {"users" : users, 'form':form}
+        return render(request=request, template_name=self.template_name, context=args)

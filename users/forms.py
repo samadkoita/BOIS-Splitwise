@@ -24,3 +24,6 @@ class CustomUserChangeForm(UserChangeForm):
         self.fields['avatar'].required = False
 
         
+
+class FriendForm(forms.Form):
+    email = forms.EmailField()

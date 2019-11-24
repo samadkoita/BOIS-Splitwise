@@ -6,7 +6,7 @@
 <!--<h1><p>{{ receive_user.firstname }}</p></h1>-->
 
 <h2>Current Balance</h2>
-<p>{{ relationship21.net_balance|sub:relationship12.net_balance}}</p>
+<p>{{ balance }}</p>
 <br>
 <form method="post">
 	{% csrf_token %}
@@ -25,4 +25,8 @@
 
 {% endfor %} 
 <h2>Groups</h2>
+{% for key,values in final_group.items %}
+	<p>{{ key.grp_name }} {{ values }}</p>
+
+{% endfor %}
 {% endblock %}

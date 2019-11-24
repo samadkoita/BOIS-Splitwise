@@ -1,14 +1,25 @@
 <!-- templates/friends_list.html -->
 {% extends 'base.html' %}
 {% block content %}
-<p>Add a friend</p>
+<u>Add a friend</u>
 <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit"> Add</button>
+    {{ friend_form.as_p }}
+    <button type="submit" name="friend"> Add</button>
 </form>
 <h1>Friend List</h1>
 {% for user in users %}
-    <p>{{ user.receiver_id }} {{ user.net_balance }}</p>
+    <p>{{ user.receiver_id.firstname }} {{ user.net_balance }}</p>
+    <!-- FIX net balance as the difference -->
+{% endfor %}
+<br><u>Create a new Group</u>
+<form method="post">
+    {% csrf_token %}
+    {{ grp_form.as_p }}
+    <button type="submit" name="group"> Create</button>
+</form>
+<h1>Group List</h1>
+{% for user in users %}
+    <p>{{ user.receiver_id.firstname }} {{ user.net_balance }}</p>
 {% endfor %}
 {% endblock %}

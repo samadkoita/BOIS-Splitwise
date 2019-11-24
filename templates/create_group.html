@@ -1,0 +1,16 @@
+<!-- templates/friends_list.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>Create a Group</h1>
+
+<form method="post">
+    {% csrf_token %}
+    Group name <input type="text" name="grp_name" required><br>
+    <h3>Friend List</h3>
+    {% for relationship in relationships %}
+        <input type="checkbox" value= "{{ relationship.receiver_id.id }}" name="list_id">{{ relationship.receiver_id.username }}<br>
+    {% endfor %}<br>
+    <input type="submit" value="Create"><br>
+</form>
+
+{% endblock %}

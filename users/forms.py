@@ -17,6 +17,3 @@ class CustomUserChangeForm(UserChangeForm):
 class FriendForm(forms.Form):
     username = forms.CharField(max_length=150)
 
-class GroupForm(forms.Form):
-    grp_name = forms.CharField(max_length=150)
-    number_friends = forms.IntegerField(initial=1)

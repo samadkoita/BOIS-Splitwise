@@ -1,0 +1,25 @@
+<!-- templates/friends_list.html -->
+{% extends 'base.html' %}
+{% block content %}
+{% if user.is_authenticated %}
+  Hi {{ user.username }}<br><br>
+
+<h2>Create a Transaction</h2>
+
+<form method="post">
+    {% csrf_token %}
+    Description <input type="text" name="grp_name" required><br>
+    <h1>Group List</h1>
+    {% for group in groups %}
+        <input type="checkbox" value= "{{ relationship.receiver_id.id }}" name="list_id">{{ group.grp_name }}<br>
+    {% endfor %}
+    <input type="submit" value="Create"><br>
+</form>
+
+{% else %}
+  <p>SplitWise!</p>
+  <a href="{% url 'login' %}">login</a><br>
+  <a href="{% url 'signup' %}">Signup</a>
+{% endif %}
+
+{% endblock %}

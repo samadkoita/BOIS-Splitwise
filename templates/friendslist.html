@@ -1,7 +1,7 @@
 <!-- templates/friends_list.html -->
 {% extends 'base.html' %}
 {% block content %}
-{% if user.is_authenticated and user.id|floatformat:"0" == user_id|floatformat:"0" %}
+{% if user.is_authenticated %}
   Hi {{ user.username }}<br><br>
 <u>Add a friend</u>
 <form method="post">

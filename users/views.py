@@ -93,24 +93,22 @@ class FriendTabView(TemplateView):
     def post(self, request, id):
         form = FriendForm(request.POST)
         if form.is_valid():
-            if 'friend' in request.POST :
-                username = form.cleaned_data['username']
-                friends = CustomUser.objects.filter(username=username)
-                if len(friends) == 1:
-                    if friends[0].id != int(id) :
-                        try:
-                            user = CustomUser.objects.get(id=id)
-                            r = Relationship(active_id=user, receiver_id=friends[0])
-                            r.save()
-                            r = Relationship(active_id=friends[0], receiver_id=user)
-                            r.save()
-                        except (IntegrityError,CustomUser.DoesNotExist) as e:
-                            print(e)
-            elif 'group' in request.POST :
-                pass
+            username = form.cleaned_data['username']
+            friends = CustomUser.objects.filter(username=username)
+            if len(friends) == 1:
+                if friends[0].id != int(id) :
+                    try:
+                        user = CustomUser.objects.get(id=id)
+                        r = Relationship(active_id=user, receiver_id=friends[0])
+                        r.save()
+                        r = Relationship(active_id=friends[0], receiver_id=user)
+                        r.save()
+                    except (IntegrityError,CustomUser.DoesNotExist) as e:
+                        print(e)
         friend_form = FriendForm()
         users = Relationship.objects.filter(active_id__id=id)
-        args = {"users" : users, 'friend_form':friend_form}
+        groups = Group.objects.filter(members__id=id)
+        args = {"users" : users, 'friend_form':friend_form,"groups" : groups}
         return render(request=request, template_name=self.template_name, context=args)
 
 class CreateGroupView(TemplateView):

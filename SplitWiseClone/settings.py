@@ -66,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
             ],
         },
         'DIRS': [os.path.join(BASE_DIR, 'templates')],#This is so that we can globally access the templates everywhere
@@ -129,3 +130,6 @@ LOGOUT_REDIRECT_URL = 'home'
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
+
+MEDIA_URL= "/media/"
+MEDIA_ROOT= os.path.join(BASE_DIR, 'media/')

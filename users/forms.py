@@ -6,13 +6,19 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = CustomUser
-        fields = ('username', 'firstname','lastname', 'email')
+        fields = ('username', 'email',)
+    def __init__(self, *args, **kwargs):
+        super(CustomUserCreationForm, self).__init__(*args, **kwargs)
 
 class CustomUserChangeForm(UserChangeForm):
 
     class Meta:
         model = CustomUser
-        fields = ('username', 'firstname','lastname', 'email')
+        fields = ('firstname','lastname', 'email','avatar')
+    def __init__(self, *args, **kwargs):
+        super(CustomUserChangeForm, self).__init__(*args, **kwargs)
+
+        
 
 class FriendForm(forms.Form):
     username = forms.CharField(max_length=150)

@@ -1,1 +1,2 @@
-django-auth
+pip install django-auth
+pip install django-avatar

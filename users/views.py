@@ -202,11 +202,17 @@ class RelationshipView(TemplateView):
             all_t_21_sum=int(0)
         if all_t_12_sum==None:
             all_t_12_sum=int(0)
-
-
+        common_groups=Group.objects.filter(members=active_user).filter(members=receive_user)
+        group12dict=all_t_12.values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+        group21dict=all_t_21.values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+        dict12=convertdict(group12dict)
+        dict21=convertdict(group21dict)
+        final_group=subractdict(common_groups,dict12,dict21)
+        print(final_group)
         non_group_transactions=all_transactions.filter(trans_id__group_or_no=False)
         non_group_transactions=non_group_transactions.order_by('-trans_id__date')
-        args={'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions}
+        balance=all_t_21_sum-all_t_12_sum
+        args={'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions,'final_group':final_group}
 
         return render(request=request, template_name=self.template_name, context=args)
 

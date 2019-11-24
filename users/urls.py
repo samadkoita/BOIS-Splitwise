@@ -11,6 +11,7 @@ urlpatterns = [
     path('friend/', views.SignUpView.as_view(), name='friend'),
     path('create_group/<int:id>', views.CreateGroupView.as_view(), name='create_group'),
     path('create_transaction/<int:grp_id>', views.CreateTransactionView.as_view(), name='create_transaction'),
-    path('friend/<id1>/<id2>',views.RelationshipView.as_view(),name='relationship')
+    path('friend/<id1>/<id2>',views.RelationshipView.as_view(),name='relationship'),
+    path('friend/<id1>/<id2>/settle',views.settle_friend,name='settle_friend'),
 ]
 #r'^(?P<pk>\d+)/$'

@@ -4,16 +4,20 @@ from django.contrib import messages
 from django.views.generic.edit import CreateView,UpdateView
 from django.views.generic import TemplateView
 from django.template.response import TemplateResponse
-from .models import CustomUser, Relationship, Group
-from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import update_session_auth_hash
+from django.http import HttpResponse
 from django.contrib.sessions import *
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from django.db.utils import IntegrityError
-from .forms import CustomUserCreationForm,CustomUserChangeForm,FriendForm
+from django.db.models import Sum
+from django.http import HttpResponseRedirect, HttpResponse
 
+from .models import *
+
+
+from .forms import *
 #Sign up
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
@@ -75,7 +79,7 @@ def FriendView(request, id):
     print(id)
     args = {"users" : users}
     return render(request=request, template_name=template_name, context=args)
-  
+
 class FriendTabView(TemplateView):
     template_name = "friendslist.html"
 
@@ -154,3 +158,77 @@ class CreateTransactionView(TemplateView):
             'groups' : groups,
         }
         return render(request=request,template_name=self.template_name, context=args)
+
+class RelationshipView(TemplateView):
+    template_name='relationships.html'
+    def get(self,request,id1,id2):
+        form=TransactionFriendForm()
+        try:
+            relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
+            relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
+
+        except:
+            print("Exception")
+
+        relationship12=relid1[0]
+        relationship21=relid2[0]
+        active_user=CustomUser.objects.filter(id=id1)
+        receive_user=CustomUser.objects.filter(id=id2)
+        active_user=active_user[0]
+        receive_user=receive_user[0]
+
+        all_t_12=Accounts.objects.filter(relation_id=relationship12)
+        all_t_21=Accounts.objects.filter(relation_id=relationship21)
+        all_transactions=all_t_12|all_t_21
+        all_t_12_sum=all_t_12.aggregate(Sum('amt_exchanged'))
+        all_t_21_sum=all_t_21.aggregate(Sum('amt_exchanged'))
+        print(all_t_21_sum)
+        print(all_t_12_sum)
+        non_group_transactions=all_transactions.filter(trans_id__group_or_no=False)
+        non_group_transactions=non_group_transactions.order_by('-trans_id__date')
+        args={'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions}
+
+        return render(request=request, template_name=self.template_name, context=args)
+
+    def post(self,request,id1,id2):
+        form=TransactionFriendForm(request.POST)
+        if form.is_valid():
+            trans_amt=int(form.cleaned_data['trans_amt'])
+            trans_choice=form.cleaned_data['trans_choice']
+            tag=form.cleaned_data['trans_tag']
+            if trans_choice=='receive':
+                trans_amt= -trans_amt
+            trans_text=form.cleaned_data['trans_text']
+            try :
+                relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
+                relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
+
+            except:
+                print("Error")
+            relationship12=relid1[0]
+            relationship21=relid2[0]
+            active_user=CustomUser.objects.filter(id=id1)
+            receive_user=CustomUser.objects.filter(id=id2)
+            active_user=active_user[0]
+            receive_user=receive_user[0]
+            relationship12.save()
+            t=Transaction(active_id=active_user,amt_paid=trans_amt,group_or_no=False,trans_name=trans_text,trans_tag=tag)
+
+            t.save()
+            a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=trans_amt)
+            a.save()
+            print(a.trans_id.trans_name)
+            all_t_12=Accounts.objects.filter(relation_id=relationship12)
+            all_t_21=Accounts.objects.filter(relation_id=relationship21)
+            all_transactions=all_t_12|all_t_21
+            all_t_12_sum=all_t_12.aggregate(Sum('amt_exchanged'))
+            all_t_21_sum=all_t_21.aggregate(Sum('amt_exchanged'))
+            print(all_t_21_sum)
+            print(all_t_12_sum)
+            non_group_transactions=all_transactions.filter(trans_id__group_or_no=False)
+            non_group_transactions=non_group_transactions.order_by('-trans_id__date')
+            print(non_group_transactions)
+
+
+        args={'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions}
+        return render(request=request, template_name=self.template_name, context=args)

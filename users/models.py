@@ -2,18 +2,16 @@
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 class CustomUser(AbstractUser):
 # add additional fields in here
-	username = models.CharField(('User ID'), max_length=30, unique = True)
-	email = models.EmailField(('email address'),blank = True)
-	firstname =  models.CharField(('first name'),max_length=30,blank = True)
-	lastname = models.CharField(('last name'),max_length=30,blank = True)
-	avatar = models.ImageField(('image'),default = "default.jpeg",blank = True,upload_to = "profile_pics")
+	firstname =  models.CharField(max_length=30,blank = True)
+	lastname = models.CharField(max_length=30,blank = True)
+	avatar = models.ImageField(default = "default.jpeg",blank = True)
+
 	def __str__(self):
 		return self.username
-
-	USERNAME_FIELD = 'username'
 	
 def contact_default():
     return {"firstname": "Webmaster",
@@ -43,17 +41,20 @@ class Transaction(models.Model):
 	settling_or_no = models.BooleanField(default=False)
 	group_num = models.ForeignKey(Group,null=True,blank=True,on_delete=models.CASCADE)
 	trans_name = models.CharField(max_length=60)
-	date = models.DateTimeField(auto_now_add=True, blank=True)
+	date = models.DateTimeField(default=timezone.now, blank=True)
+	CHOICES=(('None','None'),('Work','Work'),('Personal','Personal'),('Other','Other'))
+	trans_tag=models.CharField(max_length=10,null=True,choices=CHOICES)
+
 
 class Accounts(models.Model):
 
 	class Meta:
 		unique_together=(('trans_id','relation_id'),)
 
-
 	trans_id=models.ForeignKey(Transaction,on_delete=models.CASCADE)
 	relation_id=models.ForeignKey(Relationship,on_delete=models.CASCADE)
 	amt_exchanged=models.IntegerField(default=0)
+
 
 
 

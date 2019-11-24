@@ -7,8 +7,9 @@ urlpatterns = [
     path('signup/', views.SignUpView.as_view(), name='signup'),
     path('password/', views.change_password, name='change_password'),
     path('update/',views.profileupdate,name = 'update'),
-
+    path('friend/<id1>/<id2>/settle',views.settle_up_friend,name='settle_up_friend')
     path('friend/<id>', views.FriendTabView.as_view(), name='friend'),
     path('friend/', views.SignUpView.as_view(), name='friend'),
+    path('friend/<id1>/<id2>',views.RelationshipView.as_view(),name='relationship')
 ]
 #r'^(?P<pk>\d+)/$'

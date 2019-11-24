@@ -6,10 +6,9 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = CustomUser
-        fields = ('username', 'email')
+        fields = ('username', 'email',)
     def __init__(self, *args, **kwargs):
         super(CustomUserCreationForm, self).__init__(*args, **kwargs)
-        self.fields['email'].required = False
 
 class CustomUserChangeForm(UserChangeForm):
 
@@ -18,10 +17,6 @@ class CustomUserChangeForm(UserChangeForm):
         fields = ('firstname','lastname', 'email','avatar')
     def __init__(self, *args, **kwargs):
         super(CustomUserChangeForm, self).__init__(*args, **kwargs)
-        self.fields['email'].required = False
-        self.fields['firstname'].required = False
-        self.fields['lastname'].required = False
-        self.fields['avatar'].required = False
 
         
 

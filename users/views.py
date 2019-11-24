@@ -4,16 +4,19 @@ from django.contrib import messages
 from django.views.generic.edit import CreateView,UpdateView
 from django.views.generic import TemplateView
 from django.template.response import TemplateResponse
-from .models import CustomUser, Relationship, Group
-from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import update_session_auth_hash
+from django.http import HttpResponse
 from django.contrib.sessions import *
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from django.db.utils import IntegrityError
-from .forms import CustomUserCreationForm,CustomUserChangeForm,FriendForm
+from django.db.models import Sum
 
+from .models import *
+
+
+from .forms import *
 #Sign up
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
@@ -29,7 +32,7 @@ class UpdatedView(UpdateView):
 @login_required
 def profileupdate(request):
     if request.method == 'POST':
-        form = CustomUserChangeForm(data=request.POST, files=request.FILES,instance=request.user)
+        form = CustomUserChangeForm(data=request.POST, instance=request.user)
         if form.is_valid():
             form.save()
             return redirect('home')
@@ -75,82 +78,94 @@ def FriendView(request, id):
     print(id)
     args = {"users" : users}
     return render(request=request, template_name=template_name, context=args)
-  
+
 class FriendTabView(TemplateView):
     template_name = "friendslist.html"
 
     def get(self, request, id):
-        friend_form = FriendForm()
+        form = FriendForm()
         users = Relationship.objects.filter(active_id__id=id)
-        groups = Group.objects.filter(members__id=id)
-        args = {"users" : users,
-                'user_id' : id,
-                "groups" : groups,
-                'friend_form':friend_form,
-            }
+        args = {"users" : users, 'form':form}
         return render(request=request, template_name=self.template_name, context=args)
 
     def post(self, request, id):
         form = FriendForm(request.POST)
         if form.is_valid():
-            if 'friend' in request.POST :
-                username = form.cleaned_data['username']
-                friends = CustomUser.objects.filter(username=username)
-                if len(friends) == 1:
-                    if friends[0].id != int(id) :
-                        try:
-                            user = CustomUser.objects.get(id=id)
-                            r = Relationship(active_id=user, receiver_id=friends[0])
-                            r.save()
-                            r = Relationship(active_id=friends[0], receiver_id=user)
-                            r.save()
-                        except (IntegrityError,CustomUser.DoesNotExist) as e:
-                            print(e)
-            elif 'group' in request.POST :
-                pass
-        friend_form = FriendForm()
+            email = form.cleaned_data['email']
+            friends = CustomUser.objects.filter(email=email)
+            if len(friends) == 1:
+                if friends[0].id != int(id) :
+                    try:
+                        user = CustomUser.objects.get(id=id)
+                        r = Relationship(active_id=user, receiver_id=friends[0])
+                        r.save()
+                        r = Relationship(active_id=friends[0], receiver_id=user)
+                        r.save()
+                    except (IntegrityError,CustomUser.DoesNotExist) as e:
+                        print(e)
+        form = FriendForm()
         users = Relationship.objects.filter(active_id__id=id)
-        args = {"users" : users, 'friend_form':friend_form}
+        args = {"users" : users, 'form':form}
         return render(request=request, template_name=self.template_name, context=args)
 
-class CreateGroupView(TemplateView):
-    template_name = 'create_group.html'
+class RelationshipView(TemplateView):
+    template_name='relationships.html'
+    def get(self,request,id1,id2):
+        form=TransactionFriendForm()
+        try:
+            relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
+            relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
 
-    def get(self, request, id):
-        relationships = Relationship.objects.filter(active_id__id=id)
-        args = {'relationships':relationships}
-        return render(request=request,template_name=self.template_name,context=args)
+        except:
+            print("Exception")
 
-    def post(self, request, id):
-        grp_name = request.POST['grp_name']
-        if 'list_id' in request.POST:                
-            friend_ids = request.POST.getlist('list_id')
-            for i in range(len(friend_ids)): ## making everyone friends in a group
-                for j in range(i+1, len(friend_ids)):
-                    if Relationship.objects.filter(active_id__id=int(friend_ids[i]), receiver_id__id=int(friend_ids[j])).count() == 0:
-                        user1 = CustomUser.objects.get(id=int(friend_ids[i]))
-                        user2 = CustomUser.objects.get(id=int(friend_ids[j]))
-                        r = Relationship(active_id=user1, receiver_id=user2)
-                        r.save()
-                        r = Relationship(active_id=user2, receiver_id=user1)
-                        r.save()
-            g = Group(grp_name=grp_name)
-            g.save()
-            g.members.add(CustomUser.objects.get(id=id))
-            for fr_id in friend_ids :
-                g.members.add(CustomUser.objects.get(id=int(fr_id)))
-        return HttpResponseRedirect('../friend/%s' % id)
+        relationship12=relid1[0]
+        relationship21=relid2[0]
+        active_user=CustomUser.objects.filter(id=id1)
+        receive_user=CustomUser.objects.filter(id=id2)
+        active_user=active_user[0]
+        receive_user=receive_user[0]
+        non_group_transactions=Accounts.objects.filter(relation_id=relationship12)|Accounts.objects.filter(relation_id=relationship21)
+        non_group_transactions=non_group_transactions.filter(trans_id__group_or_no=False)
+        non_group_transactions=non_group_transactions.order_by('-trans_id__date')
+        args={'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions}
+
+        return render(request=request, template_name=self.template_name, context=args)
+
+    def post(self,request,id1,id2):
+        form=TransactionFriendForm(request.POST)
+        if form.is_valid():
+            trans_amt=int(form.cleaned_data['trans_amt'])
+            trans_choice=form.cleaned_data['trans_choice']
+            tag=form.cleaned_data['trans_tag']
+            if trans_choice=='receive':
+                trans_amt= -trans_amt
+            trans_text=form.cleaned_data['trans_text']
+            try :
+                relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
+                relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
+
+            except:
+                print("Error")
+            relationship12=relid1[0]
+            relationship21=relid2[0]
+            active_user=CustomUser.objects.filter(id=id1)
+            receive_user=CustomUser.objects.filter(id=id2)
+            active_user=active_user[0]
+            receive_user=receive_user[0]
+            relationship12.net_balance=relationship12.net_balance+trans_amt
+            relationship12.save()
+            t=Transaction(active_id=active_user,amt_paid=trans_amt,group_or_no=False,trans_name=trans_text,trans_tag=tag)
+
+            t.save()
+            a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=trans_amt)
+            a.save()
+            print(a.trans_id.trans_name)
+            non_group_transactions=Accounts.objects.filter(relation_id=relationship12)|Accounts.objects.filter(relation_id=relationship21)
+            non_group_transactions=non_group_transactions.filter(trans_id__group_or_no=False)
+            non_group_transactions=non_group_transactions.order_by('-trans_id__date')
+            print(non_group_transactions)
 
 
-class CreateTransactionView(TemplateView):
-    template_name = 'create_transaction.html'
-
-    def get(self, request, grp_id):
-        relationships = Relationship.objects.filter(active_id__id=grp_id)
-        groups = Group.objects.filter(members__id=grp_id)
-        args = {
-            'user_id' : grp_id,
-            'relationships' : relationships,
-            'groups' : groups,
-        }
-        return render(request=request,template_name=self.template_name, context=args)
+        args={'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions}
+        return render(request=request, template_name=self.template_name, context=args)

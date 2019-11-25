@@ -147,13 +147,63 @@ class CreateGroupView(TemplateView):
 class CreateTransactionView(TemplateView):
     template_name = 'create_transaction.html'
 
-    def get(self, request, grp_id):
-        relationships = Relationship.objects.filter(active_id__id=grp_id)
-        groups = Group.objects.filter(members__id=grp_id)
+    def get(self, request, grp_id, id):
+        relationships = Relationship.objects.filter(active_id__id=id)
+        group = Group.objects.get(id=grp_id)
+        transaction_tag = TransactionGroupForm()
+        members = group.members.all().exclude(id=id)
         args = {
             'user_id' : grp_id,
             'relationships' : relationships,
-            'groups' : groups,
+            'group' : group,
+            'transaction' : transaction_tag,
+            'members' : members,
+        }
+        return render(request=request,template_name=self.template_name, context=args)
+
+    def post(self, request, grp_id, id):
+        print(request.POST)
+        desc = request.POST['description']
+        amount = int(request.POST['amount'])
+        tag = request.POST['trans_tag']
+        print(tag)
+        list_vals_inp = request.POST.getlist('list_vals')
+        list_vals = []
+        list_ids = request.POST.getlist('list_ids')
+        for i in range(len(list_vals_inp)) :
+            if list_vals_inp[i] == '':
+                list_vals.append((0,int(list_ids[i])))
+            else:
+                list_vals.append((int(list_vals_inp[i]),int(list_ids[i])))
+        split_equally = 'split_equally' in request.POST
+        s = sum(map(lambda x : x[0] , list_vals))
+        if not split_equally and s != amount:
+            print("NOOO")
+        else:
+            if split_equally:
+                for i in range(len(list_vals)) :
+                    list_vals[i] = (amount//len(list_vals), list_vals[i][1])
+            # add in db
+            active_user = CustomUser.objects.get(id=id)
+            group_num = Group.objects.get(id=grp_id)
+            t=Transaction(active_id=active_user,amt_paid=amount,group_or_no=True,trans_name=desc,trans_tag=tag,group_num=group_num)
+            t.save()
+            for x in list_vals:
+                rel=Relationship.objects.filter(active_id=active_user).filter(receiver_id__id=x[1])
+                rel=rel[0]
+                a=Accounts(trans_id=t,relation_id=rel,amt_exchanged=x[0])
+                a.save()
+        return HttpResponseRedirect('../../group/%s/%s' % (grp_id,id))
+
+class GroupView(TemplateView):
+    template_name = 'group_home.html'
+
+    def get(self, request, grp_id, id):
+        group = Group.objects.get(id=grp_id)
+        transactions = Transaction.objects.filter(group_num=group)
+        args={
+            'group' : group,
+            'transactions' : transactions,
         }
         return render(request=request,template_name=self.template_name, context=args)
 

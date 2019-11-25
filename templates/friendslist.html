@@ -18,7 +18,7 @@
 <br><u><a href="{% url 'create_group' user.id %}">Create a new Group</a></u>
 <h1>Group List</h1>
 {% for group in groups %}
-    <p><a href="{% url 'create_transaction' group.id %}">{{ group.grp_name }}</a></p>
+    <p><a href="/users/group/{{group.id}}/{{user.id}}">{{ group.grp_name }}</a></p>
 {% endfor %}
 
 {% else %}

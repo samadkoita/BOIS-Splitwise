@@ -27,6 +27,10 @@ class CustomUserChangeForm(UserChangeForm):
 class FriendForm(forms.Form):
     username=forms.CharField(max_length=150)
 
+class TransactionGroupForm(forms.Form):
+    CHOICES=(('Other','Other'),('Work','Work'),('Personal','Personal'))
+    trans_tag=forms.ChoiceField(label='Add Transaction Tag:',choices=CHOICES,widget=forms.Select(),required=False)
+
     
 class TransactionFriendForm(forms.Form):
 	trans_amt=forms.IntegerField(label="Add Transaction Amount:")

@@ -3,7 +3,7 @@
 
 {% load extras %}
 {% block content %}
-<!--<h1><p>{{ receive_user.firstname }}</p></h1>-->
+<h1><p>{{ receive_user.username }}</p></h1>
 
 <h2>Current Balance</h2>
 <p>{{ balance }}</p>
@@ -13,6 +13,8 @@
 	{{form.as_p}}
 	<button type="submit">Add</button>
 </form>
+<br>
+<a href="/users/friend/{{ active_user.id }}/{{ receive_user.id }}/settle">Settle Up Transactions</a>
 <br>
 <h2>Non Group Transactions</h2>
 {% for trans in non_group_transactions %}

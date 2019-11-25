@@ -17,8 +17,9 @@
   <p><a href="{% url 'times' user.id%}">Insight: Time Series</a></p>
   <p><a href="{% url 'piechart' %}">Pichart</a></p>
   <p><a href="{% url 'bargraph1' user.id %}">Bar Graph of user with friends</a></p>
-  <p><a href="{% url 'friendslist' user.id %}">List of friends</a></p>
   <p><a href="{% url 'export_users_xls' user.id %}">Generate Excel Sheet</a></p>
+  <p><a href="{% url 'bargroup' user.id %}">Bar Graph for Group</a></p>
+
 {% else %}
   <p>SplitWise!</p>
   <a href="{% url 'login' %}">login</a><br>

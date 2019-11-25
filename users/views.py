@@ -646,14 +646,42 @@ def export_users_xls(request,id):
     rows = Accounts.objects.select_related('trans_id','relation_id').filter(relation_id__active_id__id = id).values_list('trans_id__date','trans_id__id','relation_id__active_id__username','relation_id__receiver_id__username','amt_exchanged')
     for row in rows:
         row_num += 1
+        
+        row[0] = row[0].date().strftime('%d/%m/%y')
         for col_num in range(len(row)):
             ws.write(row_num, col_num, row[col_num], font_style)
     
     rows = Accounts.objects.select_related('trans_id','relation_id').filter(relation_id__receiver_id__id = id).values_list('trans_id__date','trans_id__id','relation_id__active_id__username','relation_id__receiver_id__username','amt_exchanged')
     for row in rows:
         row_num += 1
+        row = list(row)
+        row[0] = row[0].date().strftime('%d/%m/%y')
+
         for col_num in range(len(row)):
             ws.write(row_num, col_num, row[col_num], font_style)
 
     wb.save(response)
     return response
+
+
+def friend_group_sumanyu(id):
+    active_user=CustomUser.objects.get(pk=id)
+    grps=Group.objects.filter(members=active_user)
+    all_given=Accounts.objects.filter(relation_id__active_id__id=id).filter(trans_id__group_or_no=True).values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+    all_taken=Accounts.objects.filter(relation_id__receiver_id__id=id).filter(trans_id__group_or_no=True).values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+    dict12=convertdict(all_given)
+    dict21=convertdict(all_taken)
+    final_thing=subractdict(grps,dict12,dict21)
+    return final_thing
+
+
+def BarGroups(request,id):
+    diction = friend_group_sumanyu(id)
+    categories = []
+    columns = []
+    for group,balance in diction.items():
+        categories.append(group.grp_name)
+        columns.append(balance)
+    context = {'categories':categories,
+                'columns':columns}
+    return render(request,'hichart5.html',context)

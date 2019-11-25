@@ -25,5 +25,6 @@ urlpatterns = [
     path('insight/piechart',views.json_example,name='piechart'),#
     path('insight/bargraph/friends/<id>',views.BarFriends,name = 'bargraph1'),#
     path('export/xls/<id>', views.export_users_xls, name='export_users_xls'),
+    #path('insight/bargraphoptions/<id>',views.BarGroups,name = 'bargroup'),
 ]
 #r'^(?P<pk>\d+)/$'

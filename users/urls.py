@@ -18,5 +18,12 @@ urlpatterns = [
     , views.CreateTransactionView.as_view(), name='create_transaction'),
     path('friend/<id1>/<id2>/',views.RelationshipView.as_view(),name='relationship'),
     path('friend/<id1>/<id2>/settle/',views.settle_friend,name='settle_friend'),
+    path('insight/timeseries/<id>',views.TimeSeriesViews, name = 'times'),#
+    path('insight/piechart/data/<id>',views.piMe, name = 'proc1'),
+    path('insight/friends/<id>',views.ListFriends,name = 'friendslist'),# 
+    path('insight/pifriends/<id1>/<id2>',views.PiFriends,name = 'pifriends'),#
+    path('insight/piechart',views.json_example,name='piechart'),#
+    path('insight/bargraph/friends/<id>',views.BarFriends,name = 'bargraph1'),#
+    path('export/xls/<id>', views.export_users_xls, name='export_users_xls'),
 ]
 #r'^(?P<pk>\d+)/$'

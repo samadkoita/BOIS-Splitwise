@@ -6,16 +6,16 @@ from django.views.generic import TemplateView
 from django.template.response import TemplateResponse
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import update_session_auth_hash
-from django.http import HttpResponse
+from django.http import HttpResponse,JsonResponse
 from django.contrib.sessions import *
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from django.db.utils import IntegrityError
 from django.db.models import Sum
 from django.http import HttpResponseRedirect, HttpResponse
-
+import json
 from .models import *
-
+from datetime import datetime, timedelta
 
 from .forms import *
 #Sign up
@@ -516,3 +516,144 @@ def settle_group(request,id,grp_id):
             a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=-amount)
             a.save()
     return HttpResponseRedirect('../')
+
+
+
+def TimeSeriesViews(request,id):
+    Data = Transaction.objects.filter(active_id__id=id).values('date','trans_tag').annotate(Sum('amt_paid'))
+    Dict = {}
+    Work = 'Work'
+    Personal = 'Personal'
+    Other = 'Other'
+    categories = []
+    Dict = {}
+    Dict[Work] = {}
+    Dict[Other] = {}
+    Dict[Personal] = {}
+    work = []
+    other = []
+    personal = []
+
+    for row in Data:
+        dat = row['date'].date().strftime('%d/%m/%y')
+        if dat not in categories:
+            categories.append(dat)
+        if dat not in Dict[Work]:
+            Dict[Work][dat] = 0
+        if dat not in Dict[Personal]:
+            Dict[Personal][dat] = 0
+        if dat not in Dict[Other]:
+            Dict[Other][dat] = 0
+        Dict[row['trans_tag']][dat]+=row['amt_paid__sum']
+
+        for i in categories:
+            work.append(Dict[Work][i])
+            personal.append(Dict[Personal][i])
+            other.append(Dict[Other][i])
+    
+    context = {
+        'categories':json.dumps(categories),
+        'work':json.dumps(work),
+        'personal':json.dumps(personal),
+        'other':json.dumps(other),
+    }
+    return render(request,"hichart1.html",context)
+
+
+def piMe(request,id):
+    Data = Transaction.objects.filter(active_id__id=id).values('trans_tag').annotate(Sum('amt_paid'))
+    chart = {
+        'chart': {'type': 'pie'},
+        'title': {'text': 'Pie Chart of The Kind of Expenditure'},
+        'series': [{
+            'name': 'Sum of Expenses',
+            'data': list(map(lambda row: {'name':row['trans_tag'] , 'y': row['amt_paid__sum']},Data))
+        }]
+    }
+    return JsonResponse(chart)
+
+
+
+def ListFriends(request,id):
+    Data = Relationship.objects.filter(active_id__id = id)
+
+    return render(request,"friends.html",{'Data':Data})
+
+def PiFriends(request,id1,id2):
+    Data = Accounts.objects.select_related('trans_id').filter(trans_id__group_or_no = False,relation_id__active_id__id = id1,relation_id__receiver_id__id = id2).annotate(Sum('amt_exchanged'))
+    Data2 = Accounts.objects.select_related('trans_id').filter(trans_id__group_or_no = False,relation_id__active_id__id = id2,relation_id__receiver_id__id = id1).values(name = 'relation_id__active_id__username').annotate(Sum('amt_exchanged'))
+    name1 = CustomUser.objects.get(id=id1).username
+    name2 = CustomUser.objects.get(id=id2).username
+    sum1 = 0
+    sum2 = 0
+    for i in Data:
+        sum1 = i['amt_exchanged__sum']
+    for i in Data2:
+        name2 = i['name']
+        sum2 = i['amt_exchanged__sum']
+        context = {
+            'name1':name1,'name2':name2,'sum1':sum1,'sum2':sum2
+        }
+    return render(request,'hichart3.html',context) 
+
+
+def BarFriends(request,id):
+    Data = Relationship.objects.filter(active_id__id = id).values('receiver_id')
+    rec_id = []
+    friend_username = []
+    friend_cost = []
+    for i in Data:
+        rec_id.append(i['receiver_id'])
+
+    for i in rec_id:
+        friend_username.append(CustomUser.objects.filter(id = i).values('username')[0]['username'])
+        friend_cost.append(friend_balance(id,i))
+
+    context = {
+        'categories':json.dumps(friend_username),
+        'column':json.dumps(friend_cost)
+    }
+    return render(request,"hichart4.html",context)
+
+
+    
+def json_example_2(request):
+    return render(request, 'hichart3.html')
+def json_example(request):
+    return render(request, 'hichart2.html')
+
+import xlwt
+
+def export_users_xls(request,id):
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="users.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Users')
+
+    # Sheet header, first row
+    row_num = 0
+
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columns = ['Date','Transaction No', 'Person 1', 'Person 2', 'Amount Exchanged']
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+    
+    font_style = xlwt.XFStyle()
+
+    rows = Accounts.objects.select_related('trans_id','relation_id').filter(relation_id__active_id__id = id).values_list('trans_id__date','trans_id__id','relation_id__active_id__username','relation_id__receiver_id__username','amt_exchanged')
+    for row in rows:
+        row_num += 1
+        for col_num in range(len(row)):
+            ws.write(row_num, col_num, row[col_num], font_style)
+    
+    rows = Accounts.objects.select_related('trans_id','relation_id').filter(relation_id__receiver_id__id = id).values_list('trans_id__date','trans_id__id','relation_id__active_id__username','relation_id__receiver_id__username','amt_exchanged')
+    for row in rows:
+        row_num += 1
+        for col_num in range(len(row)):
+            ws.write(row_num, col_num, row[col_num], font_style)
+
+    wb.save(response)
+    return response

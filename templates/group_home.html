@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+{% if user.is_authenticated %}
+  Hi {{ user.username }}<br>
+
+<h2> {{group.grp_name}} </h2>
+
+<a href="/users/create_transaction/{{group.id}}/{{user.id}}">Create a Transaction</a><br><br>
+
+<u>List of Transactions</u><br><br>
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Description</th>
+        <th>Amount</th>
+        <th>Initiated by</th>
+        <th>Tag</th>
+    </tr>
+{% for transaction in transactions %}
+<tr>
+<td> {{ transaction.trans_name }} </td>
+<td> {{ transaction.amt_paid }} </td>
+<td> {{ transaction.active_id.username }} </td>
+<td> {{ transaction.trans_tag }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+{% endblock %}

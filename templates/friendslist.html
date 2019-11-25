@@ -9,10 +9,10 @@
     {{ friend_form.as_p }}
     <button type="submit" name="friend"> Add</button>
 </form>
-<br><u><a href="{% url 'create_transaction' user.id %}">Add an Expense</a></u>
+
 <h1>Friend List</h1>
 {% for relationship in users %}
-    <p>{{ relationship.receiver_id.username }} {{ relationship.net_balance }}</p>
+    <p><a href="/users/friend/{{user.id}}/{{relationship.receiver_id.id}}">{{ relationship.receiver_id.username }}</a></p>
     <!-- FIX net balance as the difference -->
 {% endfor %}
 <br><u><a href="{% url 'create_group' user.id %}">Create a new Group</a></u>

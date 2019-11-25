@@ -243,7 +243,7 @@ class CreateGroupView(TemplateView):
             g.members.add(CustomUser.objects.get(id=id))
             for fr_id in friend_ids :
                 g.members.add(CustomUser.objects.get(id=int(fr_id)))
-        return HttpResponseRedirect('../friend/%s' % id)
+        return HttpResponseRedirect('../../friend/%s' % id)
 
 
 class CreateTransactionView(TemplateView):
@@ -319,8 +319,8 @@ class RelationshipView(TemplateView):
             relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
             relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
 
-        except:
-            print("Exception")
+        except Exception as e:
+            print("Exception", e)
 
         relationship12=relid1[0]
         relationship21=relid2[0]

@@ -3,11 +3,13 @@
 
 {% load extras %}
 {% block content %}
-<h1><p>{{ receive_user.username }}</p></h1>
+{% if user.is_authenticated %}
+  Hi {{ user.username }}<br>
+<h2><p>{{ receive_user.username }}</p></h2>
 
 <h2>Current Balance</h2>
 <p>{{ balance }}</p>
-<br>
+
 <form method="post">
 	{% csrf_token %}
 	{{form.as_p}}
@@ -31,4 +33,5 @@
 	<p>{{ key.grp_name }} {{ values }}</p>
 
 {% endfor %}
+{% endif %}
 {% endblock %}

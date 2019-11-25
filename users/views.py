@@ -646,7 +646,7 @@ def export_users_xls(request,id):
     rows = Accounts.objects.select_related('trans_id','relation_id').filter(relation_id__active_id__id = id).values_list('trans_id__date','trans_id__id','relation_id__active_id__username','relation_id__receiver_id__username','amt_exchanged')
     for row in rows:
         row_num += 1
-        
+        row = list(row)
         row[0] = row[0].date().strftime('%d/%m/%y')
         for col_num in range(len(row)):
             ws.write(row_num, col_num, row[col_num], font_style)

@@ -8,10 +8,14 @@
 
 <form method="post">
     {% csrf_token %}
-    Description <input type="text" name="grp_name" required><br>
-    <h1>Group List</h1>
-    {% for group in groups %}
-        <input type="checkbox" value= "{{ relationship.receiver_id.id }}" name="list_id">{{ group.grp_name }}<br>
+    Description <input type="text" name="description" required><br><br>
+    Amount <input type="number" name="amount" required><br><br>
+    {{ transaction.as_p }}<br>
+    <input type="checkbox" name="split_equally"> Split equally <br>
+    <h2>Members</h2>
+    {% for member in members %}
+        <input type="number" placeholder="0" name="list_vals"> {{ member.username }}<br>
+        <input type="hidden" name="list_ids" value="{{ member.id }}">
     {% endfor %}
     <input type="submit" value="Create"><br>
 </form>

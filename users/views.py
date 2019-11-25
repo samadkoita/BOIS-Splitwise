@@ -34,6 +34,19 @@ def convertdict(data):
         dicto[i['trans_id__group_num']]=i['amt_exchanged__sum']
     return dicto
 
+def convertdict2(data):
+    dicto={}
+    for i in data:
+        dicto[i['trans_id']]=i['amt_exchanged__sum']
+    return dicto
+
+def convertdict3(data,inp):
+    dicto={}
+    for i in data:
+        dicto[i[inp]]=i['amt_exchanged__sum']
+
+    return dicto
+
 def friend_balance(id1,id2):
     if True:
         try:
@@ -92,6 +105,53 @@ def friend_non_group_balance(id1,id2):
         balance=all_t_21_sum-all_t_12_sum
         return balance,non_group_transactions
 
+def group_settling_function(id,grp_id):
+
+    curr=Group.objects.get(pk=grp_id)
+    s=CustomUser.objects.get(pk=id)
+    student_set=curr.members.all()
+    temp1=Accounts.objects.filter(trans_id__group_num=curr).filter(relation_id__active_id__id=id)
+    temp2=Accounts.objects.filter(trans_id__group_num=curr).filter(relation_id__receiver_id__id=id)
+    temp=temp1|temp2
+    given_trans=temp.values('relation_id__active_id__id').annotate(Sum('amt_exchanged'))
+    taken_trans=temp.values('relation_id__receiver_id__id').annotate(Sum('amt_exchanged'))
+    givendict=convertdict3(given_trans,'relation_id__active_id__id')
+    takendict=convertdict3(taken_trans,'relation_id__receiver_id__id')
+    person_owes_dict=subractdict(student_set,givendict,takendict)
+    person_owes_dict.pop(s)
+    return person_owes_dict
+
+def get_people_balance(grp_id):
+
+    curr=Group.objects.get(pk=grp_id)
+    student_set=curr.members.all()
+    temp=Accounts.objects.filter(trans_id__group_num=curr)
+    given_trans=temp.values('relation_id__active_id__id').annotate(Sum('amt_exchanged'))
+    taken_trans=temp.values('relation_id__receiver_id__id').annotate(Sum('amt_exchanged'))
+    givendict=convertdict3(given_trans,'relation_id__active_id__id')
+    takendict=convertdict3(taken_trans,'relation_id__receiver_id__id')
+    person_owes_dict=subractdict(student_set,givendict,takendict)
+    return person_owes_dict
+
+
+def get_person_group_transaction(id,grp_id):
+    a=CustomUser.objects.get(id=id)
+    T=Transaction.objects.filter(group_or_no=True).filter(group_num__id=grp_id)
+    curr_group_acc=Accounts.objects.filter(trans_id__group_num__id=grp_id)
+
+    given_trans=curr_group_acc.filter(relation_id__active_id__id=id)
+    taken_trans=curr_group_acc.filter(relation_id__receiver_id__id=id)
+
+    given_trans=given_trans.values('trans_id').annotate(Sum('amt_exchanged'))
+    taken_trans=taken_trans.values('trans_id').annotate(Sum('amt_exchanged'))
+    # For each transaction, show the amount the person owes
+    givendict=convertdict2(given_trans)
+    takendict=convertdict2(taken_trans)
+    net_dict_transaction=subractdict(T,givendict,takendict)
+    # For Each Person in the Group, Get the Amount the Person Owes
+
+
+    return True
 
 def get_groups_balance(id1,id2):
     if True:
@@ -143,8 +203,6 @@ def profileupdate(request):
         form = CustomUserChangeForm(instance=request.user)
     return render(request, 'update_details.html', {'form': form})
 
-
-
 def viewupdate(request,id):
     instance = instance = get_object_or_404(CustomUser, id=id)
     form = UpdateView(request.POST or None, instance=instance)
@@ -152,10 +210,6 @@ def viewupdate(request,id):
         form.save()
         return redirect('next_view')
     return render(request, 'update_details.html', {'form': form}) 
-
-
-
-
 #Change password once logged in
 def change_password(request):
     if request.method == 'POST':
@@ -172,8 +226,6 @@ def change_password(request):
     return render(request, 'change_password.html', {
         'form': form
     })
-
-
 
 def FriendView(request, id):
     template_name = "friendslist.html"
@@ -245,7 +297,6 @@ class CreateGroupView(TemplateView):
                 g.members.add(CustomUser.objects.get(id=int(fr_id)))
         return HttpResponseRedirect('../../friend/%s' % id)
 
-
 class CreateTransactionView(TemplateView):
     template_name = 'create_transaction.html'
 
@@ -262,7 +313,6 @@ class CreateTransactionView(TemplateView):
             'members' : members,
         }
         return render(request=request,template_name=self.template_name, context=args)
-
     def post(self, request, grp_id, id):
         print(request.POST)
         desc = request.POST['description']
@@ -315,6 +365,8 @@ class GroupView(TemplateView):
         return render(request=request,template_name=self.template_name, context=args)
 
 
+
+
 class RelationshipView(TemplateView):
     template_name='relationships.html'
 
@@ -323,6 +375,7 @@ class RelationshipView(TemplateView):
         try:
             relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
             relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
+
 
         except Exception as e:
             print("Exception", e)
@@ -434,17 +487,33 @@ def settle_friend(request,id1,id2):
             relationship21=relid2[0]
 
     name1=active_user.username+"-Settling-"+receive_user.username+"- Non Group Expenses"
-    t=Transaction(active_id=active_user,amt_paid=non_grp_balance,group_or_no=False,settling_or_no=True,trans_name=name1)
-    t.save()
-    a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=non_grp_balance)
-    a.save()
+    if non_grp_balance!=0:
+        t=Transaction(active_id=active_user,amt_paid=non_grp_balance,group_or_no=False,settling_or_no=True,trans_name=name1)
+        t.save()
+        a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=non_grp_balance)
+        a.save()
     for group,amount in grp_balance.items():
         name1=active_user.username+"-Settling-"+receive_user.username+"- "+group.grp_name+" Expenses"
-        t=Transaction(active_id=active_user,amt_paid=amount,group_or_no=True,group_num=group,settling_or_no=True,trans_name=name1)
-        t.save()
-        a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=amount)
-        a.save()
+        if amount!=0:
+            t=Transaction(active_id=active_user,amt_paid=amount,group_or_no=True,group_num=group,settling_or_no=True,trans_name=name1)
+            t.save()
+            a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=amount)
+            a.save()
     form=TransactionFriendForm()
     balance=friend_balance(id1,id2)
     args={'balance':balance,'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions,'final_group':grp_balance}
-    return render(request=request,template_name='relationships.html',context=args)
+    return HttpResponseRedirect('/users/friend/'+id1+'/'+id2+'/')
+
+def settle_group(request,id,grp_id):
+    active_user=CustomUser.objects.get(pk=id)
+    group=Group.objects.get(pk=grp_id)
+    friend_amt_dict=group_settling_function(id,grp_id)
+    for friend,amount in friend_amt_dict.items():
+        name1=active_user.username+"-Settling-"+friend.username+"- "+group.grp_name+" Expenses"
+        if amount !=0:
+            t=Transaction(active_id=active_user,amt_paid=amount,group_or_no=True,group_num=group,settling_or_no=True,trans_name=name1)
+            t.save()
+            relationship12=Relationship.objects.filter(active_id=active_user).filter(receiver_id=friend)[0]
+            a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=amount)
+            a.save()
+    return True

@@ -15,6 +15,7 @@ urlpatterns = [
     , views.CreateTransactionView.as_view(), name='create_transaction'),
     path('create_transaction/<int:grp_id>/<int:id>'
     , views.CreateTransactionView.as_view(), name='create_transaction'),
-    path('friend/<id1>/<id2>',views.RelationshipView.as_view(),name='relationship')
+    path('friend/<id1>/<id2>',views.RelationshipView.as_view(),name='relationship'),
+    path('friend/<id1>/<id2>/settle',views.settle_friend,name='settle_friend'),
 ]
 #r'^(?P<pk>\d+)/$'

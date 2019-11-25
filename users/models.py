@@ -41,7 +41,7 @@ class Transaction(models.Model):
 	active_id = models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name="trans_name")
 	#transaction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 	amt_paid = models.IntegerField(default=0)
-	group_or_no = models.BooleanField(default=True)
+	group_or_no = models.BooleanField(default=False)
 	settling_or_no = models.BooleanField(default=False)
 	group_num = models.ForeignKey(Group,null=True,blank=True,on_delete=models.CASCADE)
 	trans_name = models.CharField(max_length=60)

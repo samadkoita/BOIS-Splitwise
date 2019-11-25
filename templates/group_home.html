@@ -7,6 +7,19 @@
 
 <a href="/users/create_transaction/{{group.id}}/{{user.id}}">Create a Transaction</a><br><br>
 
+<table border="1" cellpadding="7">
+  <tr>
+    <th>Member</th>
+    <th>Money owed</th>
+  </tr>
+{% for member in members %}
+<tr>
+  <td>{{ member.username }}</td>
+  <td>{{ member.money }}</td>
+</tr>
+{% endfor %}
+</table>
+<br>
 <u>List of Transactions</u><br><br>
 <table border="1" cellpadding="10">
     <tr>

@@ -253,7 +253,7 @@ class CreateTransactionView(TemplateView):
         relationships = Relationship.objects.filter(active_id__id=id)
         group = Group.objects.get(id=grp_id)
         transaction_tag = TransactionGroupForm()
-        members = group.members.all().exclude(id=id)
+        members = group.members.all()
         args = {
             'user_id' : grp_id,
             'relationships' : relationships,
@@ -268,7 +268,6 @@ class CreateTransactionView(TemplateView):
         desc = request.POST['description']
         amount = int(request.POST['amount'])
         tag = request.POST['trans_tag']
-        print(tag)
         list_vals_inp = request.POST.getlist('list_vals')
         list_vals = []
         list_ids = request.POST.getlist('list_ids')
@@ -291,21 +290,27 @@ class CreateTransactionView(TemplateView):
             t=Transaction(active_id=active_user,amt_paid=amount,group_or_no=True,trans_name=desc,trans_tag=tag,group_num=group_num)
             t.save()
             for x in list_vals:
-                rel=Relationship.objects.filter(active_id=active_user).filter(receiver_id__id=x[1])
+                if x[1] == active_user.id:
+                    continue
+                rel=Relationship.objects.filter(active_id=active_user, receiver_id=x[1])
                 rel=rel[0]
                 a=Accounts(trans_id=t,relation_id=rel,amt_exchanged=x[0])
                 a.save()
-        return HttpResponseRedirect('../../group/%s/%s' % (grp_id,id))
+        return HttpResponseRedirect('../../../group/%s/%s' % (grp_id,id))
 
 class GroupView(TemplateView):
     template_name = 'group_home.html'
 
     def get(self, request, grp_id, id):
         group = Group.objects.get(id=grp_id)
+        members = group.members.all()
+        for i in range(len(members)):
+            members[i].money = 10
         transactions = Transaction.objects.filter(group_num=group)
         args={
             'group' : group,
             'transactions' : transactions,
+            'members' : members,
         }
         return render(request=request,template_name=self.template_name, context=args)
 

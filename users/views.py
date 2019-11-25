@@ -19,6 +19,108 @@ from .models import *
 
 from .forms import *
 #Sign up
+
+def subractdict(grp_list,dict12,dict21):
+    d={}
+    for i in grp_list:
+        print
+        d[i]=dict21.get(i.id,0)-dict12.get(i.id,0)
+    return d
+
+
+def convertdict(data):
+    dicto={}
+    for i in data:
+        dicto[i['trans_id__group_num']]=i['amt_exchanged__sum']
+    return dicto
+
+def friend_balance(id1,id2):
+    if True:
+        try:
+            relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
+            relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
+
+        except:
+            print("Exception")
+
+        relationship12=relid1[0]
+        relationship21=relid2[0]
+        active_user=CustomUser.objects.filter(id=id1)
+        receive_user=CustomUser.objects.filter(id=id2)
+        active_user=active_user[0]
+        receive_user=receive_user[0]
+        all_t_12=Accounts.objects.filter(relation_id=relationship12)
+
+        all_t_21=Accounts.objects.filter(relation_id=relationship21)
+        all_transactions=all_t_12|all_t_21
+        all_t_12_sum=all_t_12.aggregate(Sum('amt_exchanged'))['amt_exchanged__sum']
+        all_t_21_sum=all_t_21.aggregate(Sum('amt_exchanged'))['amt_exchanged__sum']
+        if all_t_21_sum==None:
+            all_t_21_sum=int(0)
+        if all_t_12_sum==None:
+            all_t_12_sum=int(0)
+
+        balance=all_t_21_sum-all_t_12_sum
+        return balance
+
+def friend_non_group_balance(id1,id2):
+    if True:
+        try:
+            relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
+            relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
+
+        except:
+            print("Exception")
+
+        relationship12=relid1[0]
+        relationship21=relid2[0]
+        active_user=CustomUser.objects.filter(id=id1)
+        receive_user=CustomUser.objects.filter(id=id2)
+        active_user=active_user[0]
+        receive_user=receive_user[0]
+        all_t_12=Accounts.objects.filter(relation_id=relationship12).filter(trans_id__group_or_no=False)
+        all_t_21=Accounts.objects.filter(relation_id=relationship21).filter(trans_id__group_or_no=False)
+        all_transactions=all_t_12|all_t_21
+        all_t_12_sum=all_t_12.aggregate(Sum('amt_exchanged'))['amt_exchanged__sum']
+        all_t_21_sum=all_t_21.aggregate(Sum('amt_exchanged'))['amt_exchanged__sum']
+        if all_t_21_sum==None:
+            all_t_21_sum=int(0)
+        if all_t_12_sum==None:
+            all_t_12_sum=int(0)
+        non_group_transactions=all_transactions.filter(trans_id__group_or_no=False)
+        non_group_transactions=non_group_transactions.order_by('-trans_id__date')
+        balance=all_t_21_sum-all_t_12_sum
+        return balance,non_group_transactions
+
+
+def get_groups_balance(id1,id2):
+    if True:
+        try:
+            relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
+            relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
+
+        except:
+            print("Exception")
+
+        relationship12=relid1[0]
+        relationship21=relid2[0]
+        active_user=CustomUser.objects.filter(id=id1)
+        receive_user=CustomUser.objects.filter(id=id2)
+        active_user=active_user[0]
+        receive_user=receive_user[0]
+        all_t_12=Accounts.objects.filter(relation_id=relationship12).filter(trans_id__group_or_no=True)
+        all_t_21=Accounts.objects.filter(relation_id=relationship21).filter(trans_id__group_or_no=True)
+        if True:
+
+            common_groups=Group.objects.filter(members=active_user).filter(members=receive_user)
+            group12dict=all_t_12.values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+            group21dict=all_t_21.values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+            dict12=convertdict(group12dict)
+            dict21=convertdict(group21dict)
+            final_group=subractdict(common_groups,dict12,dict21)
+            return final_group
+
+
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('login')
@@ -112,7 +214,7 @@ class FriendTabView(TemplateView):
         friend_form = FriendForm()
         users = Relationship.objects.filter(active_id__id=id)
         groups = Group.objects.filter(members__id=id)
-        args = {"users" : users, 'friend_form':friend_form,"groups" : groups}
+        args = {"users" : users, 'friend_form':friend_form,'groups':groups}
         return render(request=request, template_name=self.template_name, context=args)
 
 class CreateGroupView(TemplateView):
@@ -207,8 +309,10 @@ class GroupView(TemplateView):
         }
         return render(request=request,template_name=self.template_name, context=args)
 
+
 class RelationshipView(TemplateView):
     template_name='relationships.html'
+
     def get(self,request,id1,id2):
         form=TransactionFriendForm()
         try:
@@ -224,17 +328,27 @@ class RelationshipView(TemplateView):
         receive_user=CustomUser.objects.filter(id=id2)
         active_user=active_user[0]
         receive_user=receive_user[0]
-
         all_t_12=Accounts.objects.filter(relation_id=relationship12)
+
         all_t_21=Accounts.objects.filter(relation_id=relationship21)
         all_transactions=all_t_12|all_t_21
-        all_t_12_sum=all_t_12.aggregate(Sum('amt_exchanged'))
-        all_t_21_sum=all_t_21.aggregate(Sum('amt_exchanged'))
-        print(all_t_21_sum)
-        print(all_t_12_sum)
+        all_t_12_sum=all_t_12.aggregate(Sum('amt_exchanged'))['amt_exchanged__sum']
+        all_t_21_sum=all_t_21.aggregate(Sum('amt_exchanged'))['amt_exchanged__sum']
+        if all_t_21_sum==None:
+            all_t_21_sum=int(0)
+        if all_t_12_sum==None:
+            all_t_12_sum=int(0)
+        common_groups=Group.objects.filter(members=active_user).filter(members=receive_user)
+        group12dict=all_t_12.values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+        group21dict=all_t_21.values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+        dict12=convertdict(group12dict)
+        dict21=convertdict(group21dict)
+        final_group=subractdict(common_groups,dict12,dict21)
+        print(final_group)
         non_group_transactions=all_transactions.filter(trans_id__group_or_no=False)
         non_group_transactions=non_group_transactions.order_by('-trans_id__date')
-        args={'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions}
+        balance=all_t_21_sum-all_t_12_sum
+        args={'balance':balance,'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions,'final_group':final_group}
 
         return render(request=request, template_name=self.template_name, context=args)
 
@@ -265,18 +379,67 @@ class RelationshipView(TemplateView):
             t.save()
             a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=trans_amt)
             a.save()
-            print(a.trans_id.trans_name)
             all_t_12=Accounts.objects.filter(relation_id=relationship12)
             all_t_21=Accounts.objects.filter(relation_id=relationship21)
             all_transactions=all_t_12|all_t_21
-            all_t_12_sum=all_t_12.aggregate(Sum('amt_exchanged'))
-            all_t_21_sum=all_t_21.aggregate(Sum('amt_exchanged'))
-            print(all_t_21_sum)
-            print(all_t_12_sum)
+            all_t_12_sum=all_t_12.aggregate(Sum('amt_exchanged'))['amt_exchanged__sum']
+            all_t_21_sum=all_t_21.aggregate(Sum('amt_exchanged'))['amt_exchanged__sum']
+            if all_t_21_sum==None:
+                all_t_21_sum=int(0)
+            if all_t_12_sum==None:
+                all_t_12_sum=int(0)
+            common_groups=Group.objects.filter(members=active_user).filter(members=receive_user)
+            group12dict=all_t_12.values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+            group21dict=all_t_21.values('trans_id__group_num').annotate(Sum('amt_exchanged'))
+            dict12=convertdict(group12dict)
+            dict21=convertdict(group21dict)
+            final_group=subractdict(common_groups,dict12,dict21)
+            print(final_group)
+            print(friend_balance(id1,id2))
+            print(friend_non_group_balance(id1,id2))
+            print(get_groups_balance(id1,id2))
             non_group_transactions=all_transactions.filter(trans_id__group_or_no=False)
             non_group_transactions=non_group_transactions.order_by('-trans_id__date')
-            print(non_group_transactions)
-
-
-        args={'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions}
+            balance=all_t_21_sum-all_t_12_sum
+        args={'balance':balance,'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions,'final_group':final_group}
         return render(request=request, template_name=self.template_name, context=args)
+
+def settle_friend(request,id1,id2):
+
+    non_grp_balance = friend_non_group_balance(id1,id2)
+    non_group_transactions=non_grp_balance[1]
+    non_grp_balance=non_grp_balance[0]
+    print(non_group_transactions)
+    print(non_grp_balance)
+    grp_balance = get_groups_balance(id1,id2)
+    print(grp_balance)
+    if True:
+        if True:
+            try :
+                relid1=Relationship.objects.filter(active_id__id=id1).filter(receiver_id__id=id2)
+                relid2=Relationship.objects.filter(active_id__id=id2).filter(receiver_id__id=id1)
+                active_user=CustomUser.objects.filter(id=id1)
+                receive_user=CustomUser.objects.filter(id=id2)
+                active_user=active_user[0]
+                receive_user=receive_user[0]
+
+            except:
+                print("Error")
+            relationship12=relid1[0]
+            relationship21=relid2[0]
+
+    name1=active_user.username+"-Settling-"+receive_user.username+"- Non Group Expenses"
+    t=Transaction(active_id=active_user,amt_paid=non_grp_balance,group_or_no=False,settling_or_no=True,trans_name=name1)
+    t.save()
+    a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=non_grp_balance)
+    a.save()
+    for group,amount in grp_balance.items():
+        name1=active_user.username+"-Settling-"+receive_user.username+"- "+group.grp_name+" Expenses"
+        t=Transaction(active_id=active_user,amt_paid=amount,group_or_no=True,group_num=group,settling_or_no=True,trans_name=name1)
+        t.save()
+        a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=amount)
+        a.save()
+    form=TransactionFriendForm()
+    balance=friend_balance(id1,id2)
+    args={'balance':balance,'active_user':active_user,'receive_user':receive_user,'relationship12':relationship12,'relationship21':relationship21,'form':form,'non_group_transactions':non_group_transactions,'final_group':grp_balance}
+    return render(request=request,template_name='relationships.html',context=args)

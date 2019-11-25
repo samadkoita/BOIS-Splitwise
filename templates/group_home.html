@@ -6,16 +6,16 @@
 <h2> {{group.grp_name}} </h2>
 
 <a href="/users/create_transaction/{{group.id}}/{{user.id}}">Create a Transaction</a><br><br>
-
+<a href="/users/group/{{group.id}}/{{user.id}}/settle">Settle Up</a><br><br>
 <table border="1" cellpadding="7">
   <tr>
     <th>Member</th>
     <th>Money owed</th>
   </tr>
-{% for member in members %}
+{% for member,val in members.items %}
 <tr>
   <td>{{ member.username }}</td>
-  <td>{{ member.money }}</td>
+  <td>{{ val }}</td>
 </tr>
 {% endfor %}
 </table>
@@ -27,13 +27,15 @@
         <th>Amount</th>
         <th>Initiated by</th>
         <th>Tag</th>
+        <th>My Contribution </th>
     </tr>
-{% for transaction in transactions %}
+{% for transaction,balance in transactions.items %}
 <tr>
 <td> {{ transaction.trans_name }} </td>
 <td> {{ transaction.amt_paid }} </td>
 <td> {{ transaction.active_id.username }} </td>
 <td> {{ transaction.trans_tag }}</td>
+<td> {{ balance }}</td>
 </tr>
 {% endfor %}
 </table>

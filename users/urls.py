@@ -10,6 +10,7 @@ urlpatterns = [
     path('friend/<id>/', views.FriendTabView.as_view(), name='friend'),
     path('friend/', views.SignUpView.as_view(), name='friend'),
     path('group/<int:grp_id>/<int:id>/', views.GroupView.as_view(), name='group'),
+    path('group/<int:grp_id>/<int:id>/settle/', views.settle_group, name='settle_group'),
     path('create_group/<int:id>/', views.CreateGroupView.as_view(), name='create_group'),
     path('create_transaction/<int:grp_id>/'
     , views.CreateTransactionView.as_view(), name='create_transaction'),

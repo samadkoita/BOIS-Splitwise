@@ -136,7 +136,7 @@ def get_people_balance(grp_id):
 
 def get_person_group_transaction(id,grp_id):
     a=CustomUser.objects.get(id=id)
-    T=Transaction.objects.filter(group_or_no=True).filter(group_num__id=grp_id)
+    T=Transaction.objects.filter(group_or_no=True).filter(group_num__id=grp_id).order_by('-date')
     curr_group_acc=Accounts.objects.filter(trans_id__group_num__id=grp_id)
 
     given_trans=curr_group_acc.filter(relation_id__active_id__id=id)
@@ -151,7 +151,7 @@ def get_person_group_transaction(id,grp_id):
     # For Each Person in the Group, Get the Amount the Person Owes
 
 
-    return True
+    return net_dict_transaction
 
 def get_groups_balance(id1,id2):
     if True:
@@ -354,9 +354,8 @@ class GroupView(TemplateView):
     def get(self, request, grp_id, id):
         group = Group.objects.get(id=grp_id)
         members = group.members.all()
-        for i in range(len(members)):
-            members[i].money = 10
-        transactions = Transaction.objects.filter(group_num=group)
+        members = get_people_balance(grp_id)
+        transactions = get_person_group_transaction(id,grp_id)
         args={
             'group' : group,
             'transactions' : transactions,
@@ -511,9 +510,9 @@ def settle_group(request,id,grp_id):
     for friend,amount in friend_amt_dict.items():
         name1=active_user.username+"-Settling-"+friend.username+"- "+group.grp_name+" Expenses"
         if amount !=0:
-            t=Transaction(active_id=active_user,amt_paid=amount,group_or_no=True,group_num=group,settling_or_no=True,trans_name=name1)
+            t=Transaction(active_id=active_user,amt_paid=-amount,group_or_no=True,group_num=group,settling_or_no=True,trans_name=name1)
             t.save()
             relationship12=Relationship.objects.filter(active_id=active_user).filter(receiver_id=friend)[0]
-            a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=amount)
+            a=Accounts(trans_id=t,relation_id=relationship12,amt_exchanged=-amount)
             a.save()
-    return True
+    return HttpResponseRedirect('../')
